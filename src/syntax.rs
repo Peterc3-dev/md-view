@@ -28,7 +28,7 @@ fn keyword_style() -> Style {
 }
 
 fn string_style() -> Style {
-    Style::default().fg(Color::Green)
+    Style::default().fg(Color::Rgb(0, 255, 200))
 }
 
 fn comment_style() -> Style {

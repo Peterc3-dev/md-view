@@ -121,7 +121,7 @@ fn draw_raw_content(f: &mut Frame, app: &App, area: Rect) {
                     format!("{:>4} │ ", line_num),
                     Style::default().fg(Color::DarkGray),
                 ),
-                Span::styled(line.clone(), Style::default().fg(Color::Green)),
+                Span::styled(line.clone(), Style::default().fg(Color::Rgb(0, 255, 200))),
             ])
         })
         .collect();
@@ -134,7 +134,7 @@ fn draw_toc(f: &mut Frame, app: &App, area: Rect) {
     let block = Block::default()
         .title(Span::styled(
             " Table of Contents ",
-            Style::default().fg(Color::Green).add_modifier(Modifier::BOLD),
+            Style::default().fg(Color::Rgb(0, 255, 200)).add_modifier(Modifier::BOLD),
         ))
         .borders(Borders::ALL)
         .border_style(Style::default().fg(Color::DarkGray));
@@ -156,12 +156,12 @@ fn draw_toc(f: &mut Frame, app: &App, area: Rect) {
             let style = if i == app.toc_cursor {
                 Style::default()
                     .fg(Color::Black)
-                    .bg(Color::Green)
+                    .bg(Color::Rgb(0, 255, 200))
                     .add_modifier(Modifier::BOLD)
             } else {
                 match entry.level {
-                    1 => Style::default().fg(Color::Green).add_modifier(Modifier::BOLD),
-                    2 => Style::default().fg(Color::Green),
+                    1 => Style::default().fg(Color::Rgb(0, 255, 200)).add_modifier(Modifier::BOLD),
+                    2 => Style::default().fg(Color::Rgb(0, 255, 200)),
                     3 => Style::default().fg(Color::DarkGray),
                     _ => Style::default().fg(Color::DarkGray),
                 }
@@ -236,7 +236,7 @@ fn draw_status_bar(f: &mut Frame, app: &App, area: Rect) {
         bar_text,
         Style::default()
             .fg(Color::Black)
-            .bg(Color::Green),
+            .bg(Color::Rgb(0, 255, 200)),
     )));
 
     f.render_widget(bar, area);
