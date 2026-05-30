@@ -1,10 +1,10 @@
 mod app;
 mod markdown;
 mod render;
-mod toc;
 mod search;
-mod watcher;
 mod syntax;
+mod toc;
+mod watcher;
 
 use std::io::{self, Read as IoRead};
 use std::path::PathBuf;
@@ -23,7 +23,10 @@ use ratatui::Terminal;
 use app::{App, Mode};
 
 #[derive(Parser, Debug)]
-#[command(name = "md-view", about = "Terminal Markdown viewer with phosphor-green theme")]
+#[command(
+    name = "md-view",
+    about = "Terminal Markdown viewer with phosphor-green theme"
+)]
 struct Cli {
     /// Markdown file to view
     file: Option<PathBuf>,
@@ -118,11 +121,7 @@ fn run_app(
 
         if event::poll(Duration::from_millis(100))? {
             match event::read()? {
-                Event::Key(key) => {
-                    if handle_key(app, key) {
-                        break;
-                    }
-                }
+                Event::Key(key) if handle_key(app, key) => break,
                 Event::Resize(_, _) => {
                     // Will be handled on next draw
                 }
