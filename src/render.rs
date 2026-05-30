@@ -1,7 +1,9 @@
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
-use ratatui::widgets::{Block, Borders, List, ListItem, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState};
+use ratatui::widgets::{
+    Block, Borders, List, ListItem, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState,
+};
 use ratatui::Frame;
 
 use crate::app::{App, Mode};
@@ -35,10 +37,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
         // Split horizontally: TOC sidebar | content
         let h_chunks = Layout::default()
             .direction(Direction::Horizontal)
-            .constraints([
-                Constraint::Percentage(30),
-                Constraint::Percentage(70),
-            ])
+            .constraints([Constraint::Percentage(30), Constraint::Percentage(70)])
             .split(content_area);
 
         draw_toc(f, app, h_chunks[0]);
@@ -51,8 +50,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
 }
 
 fn draw_content(f: &mut Frame, app: &App, area: Rect) {
-    let block = Block::default()
-        .borders(Borders::NONE);
+    let block = Block::default().borders(Borders::NONE);
 
     let inner = block.inner(area);
 
@@ -93,7 +91,7 @@ fn draw_rendered_content(f: &mut Frame, app: &App, area: Rect) {
             if !app.search_matches.is_empty() {
                 let has_match = app.search_matches.iter().any(|m| m.line_index == abs_line);
                 if has_match {
-                    let mut spans: Vec<Span<'_>> = rl.line.spans.iter().cloned().collect();
+                    let mut spans: Vec<Span<'_>> = rl.line.spans.to_vec();
                     spans.push(Span::styled(" ◄", Style::default().fg(Color::Yellow)));
                     return Line::from(spans);
                 }
@@ -134,7 +132,9 @@ fn draw_toc(f: &mut Frame, app: &App, area: Rect) {
     let block = Block::default()
         .title(Span::styled(
             " Table of Contents ",
-            Style::default().fg(Color::Rgb(0, 255, 200)).add_modifier(Modifier::BOLD),
+            Style::default()
+                .fg(Color::Rgb(0, 255, 200))
+                .add_modifier(Modifier::BOLD),
         ))
         .borders(Borders::ALL)
         .border_style(Style::default().fg(Color::DarkGray));
@@ -160,7 +160,9 @@ fn draw_toc(f: &mut Frame, app: &App, area: Rect) {
                     .add_modifier(Modifier::BOLD)
             } else {
                 match entry.level {
-                    1 => Style::default().fg(Color::Rgb(0, 255, 200)).add_modifier(Modifier::BOLD),
+                    1 => Style::default()
+                        .fg(Color::Rgb(0, 255, 200))
+                        .add_modifier(Modifier::BOLD),
                     2 => Style::default().fg(Color::Rgb(0, 255, 200)),
                     3 => Style::default().fg(Color::DarkGray),
                     _ => Style::default().fg(Color::DarkGray),
@@ -215,18 +217,10 @@ fn draw_status_bar(f: &mut Frame, app: &App, area: Rect) {
     let left = if app.mode == Mode::Search {
         format!(" {} │ /{}█", mode_str, app.search_input)
     } else {
-        format!(
-            " {} │ {}{}",
-            mode_str, app.filename, search_info
-        )
+        format!(" {} │ {}{}", mode_str, app.filename, search_info)
     };
 
-    let right = format!(
-        "{}% │ {}/{} ",
-        pct,
-        app.scroll_offset + 1,
-        total
-    );
+    let right = format!("{}% │ {}/{} ", pct, app.scroll_offset + 1, total);
 
     let bar_width = area.width as usize;
     let padding = bar_width.saturating_sub(left.len() + right.len());

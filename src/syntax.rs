@@ -2,10 +2,15 @@ use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::Span;
 
 /// Simple keyword-based syntax highlighting for common languages
-pub fn highlight<'a>(line: &str, lang: Option<&str>) -> Vec<Span<'static>> {
+pub fn highlight(line: &str, lang: Option<&str>) -> Vec<Span<'static>> {
     let lang = match lang {
         Some(l) => l.to_lowercase(),
-        None => return vec![Span::styled(line.to_string(), Style::default().fg(Color::Cyan))],
+        None => {
+            return vec![Span::styled(
+                line.to_string(),
+                Style::default().fg(Color::Cyan),
+            )]
+        }
     };
 
     match lang.as_str() {
@@ -19,12 +24,17 @@ pub fn highlight<'a>(line: &str, lang: Option<&str>) -> Vec<Span<'static>> {
         "yaml" | "yml" => highlight_yaml(line),
         "json" => highlight_json(line),
         "sql" => highlight_sql(line),
-        _ => vec![Span::styled(line.to_string(), Style::default().fg(Color::Cyan))],
+        _ => vec![Span::styled(
+            line.to_string(),
+            Style::default().fg(Color::Cyan),
+        )],
     }
 }
 
 fn keyword_style() -> Style {
-    Style::default().fg(Color::Magenta).add_modifier(Modifier::BOLD)
+    Style::default()
+        .fg(Color::Magenta)
+        .add_modifier(Modifier::BOLD)
 }
 
 fn string_style() -> Style {
@@ -32,7 +42,9 @@ fn string_style() -> Style {
 }
 
 fn comment_style() -> Style {
-    Style::default().fg(Color::DarkGray).add_modifier(Modifier::ITALIC)
+    Style::default()
+        .fg(Color::DarkGray)
+        .add_modifier(Modifier::ITALIC)
 }
 
 fn number_style() -> Style {
@@ -52,7 +64,12 @@ fn function_style() -> Style {
 }
 
 /// Tokenize a line into spans with syntax-aware coloring
-fn highlight_with_rules(line: &str, keywords: &[&str], types: &[&str], comment_prefix: &str) -> Vec<Span<'static>> {
+fn highlight_with_rules(
+    line: &str,
+    keywords: &[&str],
+    types: &[&str],
+    comment_prefix: &str,
+) -> Vec<Span<'static>> {
     let trimmed = line.trim_start();
     let indent = &line[..line.len() - trimmed.len()];
 
@@ -111,7 +128,10 @@ fn highlight_with_rules(line: &str, keywords: &[&str], types: &[&str], comment_p
         } else {
             if !current_word.is_empty() {
                 // Check if this is a function call (followed by '(')
-                if ch == '(' && !keywords.contains(&current_word.as_str()) && !types.contains(&current_word.as_str()) {
+                if ch == '('
+                    && !keywords.contains(&current_word.as_str())
+                    && !types.contains(&current_word.as_str())
+                {
                     spans.push(Span::styled(current_word.clone(), function_style()));
                 } else {
                     spans.push(classify_word(&current_word, keywords, types));
@@ -119,7 +139,8 @@ fn highlight_with_rules(line: &str, keywords: &[&str], types: &[&str], comment_p
                 current_word.clear();
             }
             // Check for inline comment
-            let remaining: String = trimmed[chars.peek().map(|&(i, _)| i).unwrap_or(trimmed.len())..].to_string();
+            let remaining: String =
+                trimmed[chars.peek().map(|&(i, _)| i).unwrap_or(trimmed.len())..].to_string();
             if !comment_prefix.is_empty() && remaining.starts_with(comment_prefix) {
                 spans.push(Span::styled(
                     format!("{}{}", ch, &remaining[..]),
@@ -154,11 +175,22 @@ fn classify_word(word: &str, keywords: &[&str], types: &[&str]) -> Span<'static>
         Span::styled(word.to_string(), keyword_style())
     } else if types.contains(&word) {
         Span::styled(word.to_string(), type_style())
-    } else if word.chars().all(|c| c.is_ascii_digit() || c == '.' || c == 'x' || c == 'b' || c == 'o')
-        && word.chars().next().map(|c| c.is_ascii_digit()).unwrap_or(false)
+    } else if word
+        .chars()
+        .all(|c| c.is_ascii_digit() || c == '.' || c == 'x' || c == 'b' || c == 'o')
+        && word
+            .chars()
+            .next()
+            .map(|c| c.is_ascii_digit())
+            .unwrap_or(false)
     {
         Span::styled(word.to_string(), number_style())
-    } else if word.chars().next().map(|c| c.is_uppercase()).unwrap_or(false) {
+    } else if word
+        .chars()
+        .next()
+        .map(|c| c.is_uppercase())
+        .unwrap_or(false)
+    {
         Span::styled(word.to_string(), type_style())
     } else {
         Span::styled(word.to_string(), default_style())
@@ -167,60 +199,89 @@ fn classify_word(word: &str, keywords: &[&str], types: &[&str]) -> Span<'static>
 
 fn highlight_rust(line: &str) -> Vec<Span<'static>> {
     let keywords = &[
-        "fn", "let", "mut", "const", "static", "struct", "enum", "impl", "trait",
-        "pub", "use", "mod", "crate", "self", "super", "as", "if", "else",
-        "match", "for", "while", "loop", "break", "continue", "return",
-        "where", "type", "async", "await", "move", "ref", "unsafe", "extern",
-        "dyn", "in", "true", "false",
+        "fn", "let", "mut", "const", "static", "struct", "enum", "impl", "trait", "pub", "use",
+        "mod", "crate", "self", "super", "as", "if", "else", "match", "for", "while", "loop",
+        "break", "continue", "return", "where", "type", "async", "await", "move", "ref", "unsafe",
+        "extern", "dyn", "in", "true", "false",
     ];
     let types = &[
-        "String", "Vec", "Option", "Result", "Box", "Rc", "Arc",
-        "HashMap", "HashSet", "BTreeMap", "i8", "i16", "i32", "i64", "i128",
-        "u8", "u16", "u32", "u64", "u128", "f32", "f64", "bool", "char",
-        "usize", "isize", "str", "Self",
+        "String", "Vec", "Option", "Result", "Box", "Rc", "Arc", "HashMap", "HashSet", "BTreeMap",
+        "i8", "i16", "i32", "i64", "i128", "u8", "u16", "u32", "u64", "u128", "f32", "f64", "bool",
+        "char", "usize", "isize", "str", "Self",
     ];
     highlight_with_rules(line, keywords, types, "//")
 }
 
 fn highlight_python(line: &str) -> Vec<Span<'static>> {
     let keywords = &[
-        "def", "class", "import", "from", "as", "if", "elif", "else",
-        "for", "while", "break", "continue", "return", "yield", "with",
-        "try", "except", "finally", "raise", "pass", "lambda", "and",
-        "or", "not", "in", "is", "True", "False", "None", "self",
-        "async", "await", "global", "nonlocal",
+        "def", "class", "import", "from", "as", "if", "elif", "else", "for", "while", "break",
+        "continue", "return", "yield", "with", "try", "except", "finally", "raise", "pass",
+        "lambda", "and", "or", "not", "in", "is", "True", "False", "None", "self", "async",
+        "await", "global", "nonlocal",
     ];
     let types = &[
-        "int", "float", "str", "bool", "list", "dict", "tuple", "set",
-        "bytes", "type", "object",
+        "int", "float", "str", "bool", "list", "dict", "tuple", "set", "bytes", "type", "object",
     ];
     highlight_with_rules(line, keywords, types, "#")
 }
 
 fn highlight_js(line: &str) -> Vec<Span<'static>> {
     let keywords = &[
-        "function", "const", "let", "var", "if", "else", "for", "while",
-        "do", "switch", "case", "break", "continue", "return", "throw",
-        "try", "catch", "finally", "class", "extends", "new", "this",
-        "import", "export", "default", "from", "async", "await", "yield",
-        "typeof", "instanceof", "in", "of", "true", "false", "null",
-        "undefined", "interface", "type", "enum",
+        "function",
+        "const",
+        "let",
+        "var",
+        "if",
+        "else",
+        "for",
+        "while",
+        "do",
+        "switch",
+        "case",
+        "break",
+        "continue",
+        "return",
+        "throw",
+        "try",
+        "catch",
+        "finally",
+        "class",
+        "extends",
+        "new",
+        "this",
+        "import",
+        "export",
+        "default",
+        "from",
+        "async",
+        "await",
+        "yield",
+        "typeof",
+        "instanceof",
+        "in",
+        "of",
+        "true",
+        "false",
+        "null",
+        "undefined",
+        "interface",
+        "type",
+        "enum",
     ];
     let types = &[
-        "String", "Number", "Boolean", "Array", "Object", "Promise",
-        "Map", "Set", "Date", "RegExp", "Error",
+        "String", "Number", "Boolean", "Array", "Object", "Promise", "Map", "Set", "Date",
+        "RegExp", "Error",
     ];
     highlight_with_rules(line, keywords, types, "//")
 }
 
 fn highlight_shell(line: &str) -> Vec<Span<'static>> {
     let keywords = &[
-        "if", "then", "else", "elif", "fi", "for", "while", "do", "done",
-        "case", "esac", "in", "function", "return", "exit", "export",
-        "local", "readonly", "declare", "typeset", "source", "alias",
-        "unalias", "set", "unset", "shift", "trap", "eval", "exec",
-        "sudo", "cd", "ls", "grep", "find", "echo", "cat", "mkdir",
-        "rm", "cp", "mv", "chmod", "chown", "curl", "wget",
+        "if", "then", "else", "elif", "fi", "for", "while", "do", "done", "case", "esac", "in",
+        "function", "return", "exit", "export", "local", "readonly", "declare", "typeset",
+        "source", "alias", "unalias", "set", "unset", "shift", "trap", "eval", "exec", "sudo",
+        "cd", "ls", "grep", "find", "echo", "cat", "mkdir", "rm", "cp", "mv", "chmod", "chown",
+        "curl", "wget",
     ];
     let types: &[&str] = &[];
     highlight_with_rules(line, keywords, types, "#")
@@ -228,34 +289,93 @@ fn highlight_shell(line: &str) -> Vec<Span<'static>> {
 
 fn highlight_go(line: &str) -> Vec<Span<'static>> {
     let keywords = &[
-        "func", "package", "import", "var", "const", "type", "struct",
-        "interface", "map", "chan", "go", "select", "if", "else", "for",
-        "range", "switch", "case", "default", "break", "continue",
-        "return", "defer", "fallthrough", "goto", "true", "false", "nil",
+        "func",
+        "package",
+        "import",
+        "var",
+        "const",
+        "type",
+        "struct",
+        "interface",
+        "map",
+        "chan",
+        "go",
+        "select",
+        "if",
+        "else",
+        "for",
+        "range",
+        "switch",
+        "case",
+        "default",
+        "break",
+        "continue",
+        "return",
+        "defer",
+        "fallthrough",
+        "goto",
+        "true",
+        "false",
+        "nil",
     ];
     let types = &[
-        "string", "int", "int8", "int16", "int32", "int64",
-        "uint", "uint8", "uint16", "uint32", "uint64",
-        "float32", "float64", "bool", "byte", "rune", "error",
+        "string", "int", "int8", "int16", "int32", "int64", "uint", "uint8", "uint16", "uint32",
+        "uint64", "float32", "float64", "bool", "byte", "rune", "error",
     ];
     highlight_with_rules(line, keywords, types, "//")
 }
 
 fn highlight_c(line: &str) -> Vec<Span<'static>> {
     let keywords = &[
-        "if", "else", "for", "while", "do", "switch", "case", "break",
-        "continue", "return", "goto", "typedef", "struct", "union",
-        "enum", "extern", "static", "const", "volatile", "register",
-        "sizeof", "auto", "inline", "restrict", "class", "public",
-        "private", "protected", "virtual", "override", "template",
-        "namespace", "using", "new", "delete", "try", "catch", "throw",
-        "true", "false", "nullptr", "NULL", "include", "define",
+        "if",
+        "else",
+        "for",
+        "while",
+        "do",
+        "switch",
+        "case",
+        "break",
+        "continue",
+        "return",
+        "goto",
+        "typedef",
+        "struct",
+        "union",
+        "enum",
+        "extern",
+        "static",
+        "const",
+        "volatile",
+        "register",
+        "sizeof",
+        "auto",
+        "inline",
+        "restrict",
+        "class",
+        "public",
+        "private",
+        "protected",
+        "virtual",
+        "override",
+        "template",
+        "namespace",
+        "using",
+        "new",
+        "delete",
+        "try",
+        "catch",
+        "throw",
+        "true",
+        "false",
+        "nullptr",
+        "NULL",
+        "include",
+        "define",
     ];
     let types = &[
-        "int", "char", "float", "double", "void", "long", "short",
-        "unsigned", "signed", "size_t", "bool", "uint8_t", "uint16_t",
-        "uint32_t", "uint64_t", "int8_t", "int16_t", "int32_t", "int64_t",
-        "string", "vector", "map", "set",
+        "int", "char", "float", "double", "void", "long", "short", "unsigned", "signed", "size_t",
+        "bool", "uint8_t", "uint16_t", "uint32_t", "uint64_t", "int8_t", "int16_t", "int32_t",
+        "int64_t", "string", "vector", "map", "set",
     ];
     highlight_with_rules(line, keywords, types, "//")
 }
@@ -311,7 +431,10 @@ fn highlight_yaml(line: &str) -> Vec<Span<'static>> {
         return vec![
             Span::styled(indent.to_string(), default_style()),
             Span::styled("- ".to_string(), keyword_style()),
-            Span::styled(trimmed.trim_start_matches('-').trim_start().to_string(), default_style()),
+            Span::styled(
+                trimmed.trim_start_matches('-').trim_start().to_string(),
+                default_style(),
+            ),
         ];
     }
     vec![Span::styled(line.to_string(), default_style())]
@@ -338,24 +461,113 @@ fn highlight_json(line: &str) -> Vec<Span<'static>> {
 
 fn highlight_sql(line: &str) -> Vec<Span<'static>> {
     let keywords = &[
-        "SELECT", "FROM", "WHERE", "INSERT", "INTO", "VALUES", "UPDATE",
-        "SET", "DELETE", "CREATE", "TABLE", "DROP", "ALTER", "ADD",
-        "INDEX", "JOIN", "LEFT", "RIGHT", "INNER", "OUTER", "ON",
-        "AND", "OR", "NOT", "IN", "IS", "NULL", "LIKE", "BETWEEN",
-        "ORDER", "BY", "GROUP", "HAVING", "LIMIT", "OFFSET", "AS",
-        "DISTINCT", "COUNT", "SUM", "AVG", "MAX", "MIN", "EXISTS",
-        "UNION", "ALL", "PRIMARY", "KEY", "FOREIGN", "REFERENCES",
-        "CASCADE", "BEGIN", "COMMIT", "ROLLBACK", "TRANSACTION",
-        "select", "from", "where", "insert", "into", "values", "update",
-        "set", "delete", "create", "table", "drop", "alter", "add",
-        "join", "left", "right", "inner", "outer", "on", "and", "or",
-        "not", "in", "is", "null", "like", "between", "order", "by",
-        "group", "having", "limit", "offset", "as", "distinct",
+        "SELECT",
+        "FROM",
+        "WHERE",
+        "INSERT",
+        "INTO",
+        "VALUES",
+        "UPDATE",
+        "SET",
+        "DELETE",
+        "CREATE",
+        "TABLE",
+        "DROP",
+        "ALTER",
+        "ADD",
+        "INDEX",
+        "JOIN",
+        "LEFT",
+        "RIGHT",
+        "INNER",
+        "OUTER",
+        "ON",
+        "AND",
+        "OR",
+        "NOT",
+        "IN",
+        "IS",
+        "NULL",
+        "LIKE",
+        "BETWEEN",
+        "ORDER",
+        "BY",
+        "GROUP",
+        "HAVING",
+        "LIMIT",
+        "OFFSET",
+        "AS",
+        "DISTINCT",
+        "COUNT",
+        "SUM",
+        "AVG",
+        "MAX",
+        "MIN",
+        "EXISTS",
+        "UNION",
+        "ALL",
+        "PRIMARY",
+        "KEY",
+        "FOREIGN",
+        "REFERENCES",
+        "CASCADE",
+        "BEGIN",
+        "COMMIT",
+        "ROLLBACK",
+        "TRANSACTION",
+        "select",
+        "from",
+        "where",
+        "insert",
+        "into",
+        "values",
+        "update",
+        "set",
+        "delete",
+        "create",
+        "table",
+        "drop",
+        "alter",
+        "add",
+        "join",
+        "left",
+        "right",
+        "inner",
+        "outer",
+        "on",
+        "and",
+        "or",
+        "not",
+        "in",
+        "is",
+        "null",
+        "like",
+        "between",
+        "order",
+        "by",
+        "group",
+        "having",
+        "limit",
+        "offset",
+        "as",
+        "distinct",
     ];
     let types = &[
-        "INTEGER", "TEXT", "REAL", "BLOB", "VARCHAR", "CHAR", "INT",
-        "BIGINT", "BOOLEAN", "DATE", "TIMESTAMP", "FLOAT", "DOUBLE",
-        "DECIMAL", "SERIAL",
+        "INTEGER",
+        "TEXT",
+        "REAL",
+        "BLOB",
+        "VARCHAR",
+        "CHAR",
+        "INT",
+        "BIGINT",
+        "BOOLEAN",
+        "DATE",
+        "TIMESTAMP",
+        "FLOAT",
+        "DOUBLE",
+        "DECIMAL",
+        "SERIAL",
     ];
     highlight_with_rules(line, keywords, types, "--")
 }

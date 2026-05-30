@@ -26,10 +26,7 @@ pub fn start_watching(
     )?;
 
     // Watch the parent directory (works better with editors that write temp files)
-    let watch_dir = watch_path
-        .parent()
-        .unwrap_or(&watch_path)
-        .to_path_buf();
+    let watch_dir = watch_path.parent().unwrap_or(&watch_path).to_path_buf();
     watcher.watch(&watch_dir, RecursiveMode::NonRecursive)?;
 
     Ok(watcher)

@@ -1,4 +1,4 @@
-use pulldown_cmark::{Event, HeadingLevel, Options, Parser, Tag, TagEnd, CodeBlockKind};
+use pulldown_cmark::{CodeBlockKind, Event, HeadingLevel, Options, Parser, Tag, TagEnd};
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
 
@@ -46,8 +46,7 @@ impl Theme {
             .add_modifier(Modifier::BOLD)
     }
     pub fn h4() -> Style {
-        Style::default()
-            .fg(Color::DarkGray)
+        Style::default().fg(Color::DarkGray)
     }
     pub fn bold() -> Style {
         Style::default()
@@ -247,7 +246,8 @@ impl MdRenderer {
                     3 => "▒ ",
                     _ => "░ ",
                 };
-                self.current_spans.push(Span::styled(prefix.to_string(), style));
+                self.current_spans
+                    .push(Span::styled(prefix.to_string(), style));
             }
             Tag::Paragraph => {
                 // Nothing special at start
@@ -261,7 +261,11 @@ impl MdRenderer {
                 self.code_block_lang = match kind {
                     CodeBlockKind::Fenced(lang) => {
                         let l = lang.to_string();
-                        if l.is_empty() { None } else { Some(l) }
+                        if l.is_empty() {
+                            None
+                        } else {
+                            Some(l)
+                        }
                     }
                     CodeBlockKind::Indented => None,
                 };
@@ -276,13 +280,11 @@ impl MdRenderer {
             Tag::Item => {
                 let indent = "  ".repeat(self.list_depth.saturating_sub(1) as usize);
                 let bullet = match self.list_stack.last() {
-                    Some(ListKind::Unordered) => {
-                        match self.list_depth {
-                            1 => "•",
-                            2 => "◦",
-                            _ => "▪",
-                        }
-                    }
+                    Some(ListKind::Unordered) => match self.list_depth {
+                        1 => "•",
+                        2 => "◦",
+                        _ => "▪",
+                    },
                     Some(ListKind::Ordered(n)) => {
                         let marker = format!("{}.", n);
                         // Update the counter
@@ -352,9 +354,7 @@ impl MdRenderer {
                     let plain: String = spans.iter().map(|s| s.content.as_ref()).collect();
                     let wrapped = word_wrap(&plain, self.width.saturating_sub(4));
                     for wline in wrapped {
-                        let mut line_spans = vec![
-                            Span::styled(" ▌ ", Theme::blockquote_bar()),
-                        ];
+                        let mut line_spans = vec![Span::styled(" ▌ ", Theme::blockquote_bar())];
                         line_spans.push(Span::styled(wline.clone(), Theme::blockquote_text()));
                         self.output.push(RenderedLine {
                             line: Line::from(line_spans),
@@ -370,7 +370,9 @@ impl MdRenderer {
                         spans[0].style
                     } else if !spans.is_empty() {
                         // Find the primary non-default style
-                        spans.iter().find(|s| s.style != Style::default())
+                        spans
+                            .iter()
+                            .find(|s| s.style != Style::default())
                             .map(|s| s.style)
                             .unwrap_or(Theme::normal())
                     } else {
@@ -474,14 +476,13 @@ impl MdRenderer {
         }
 
         let style = self.current_style();
-        self.current_spans.push(Span::styled(text.to_string(), style));
+        self.current_spans
+            .push(Span::styled(text.to_string(), style));
     }
 
     fn inline_code(&mut self, code: &pulldown_cmark::CowStr<'_>) {
-        self.current_spans.push(Span::styled(
-            format!("`{}`", code),
-            Theme::code_inline(),
-        ));
+        self.current_spans
+            .push(Span::styled(format!("`{}`", code), Theme::code_inline()));
     }
 
     fn soft_break(&mut self) {
@@ -494,16 +495,19 @@ impl MdRenderer {
 
     fn horizontal_rule(&mut self) {
         let rule = "─".repeat(self.width.saturating_sub(2));
-        self.current_spans.push(Span::styled(rule.clone(), Theme::hr()));
+        self.current_spans
+            .push(Span::styled(rule.clone(), Theme::hr()));
         self.emit_line(LineType::HorizontalRule);
         self.emit_empty();
     }
 
     fn task_list_marker(&mut self, checked: bool) {
         if checked {
-            self.current_spans.push(Span::styled("[✓] ", Theme::task_done()));
+            self.current_spans
+                .push(Span::styled("[✓] ", Theme::task_done()));
         } else {
-            self.current_spans.push(Span::styled("[ ] ", Theme::task_pending()));
+            self.current_spans
+                .push(Span::styled("[ ] ", Theme::task_pending()));
         }
     }
 
@@ -521,7 +525,8 @@ impl MdRenderer {
             let remaining = block_width.saturating_sub(label.len());
             format!("╭{}{}╮", label, "─".repeat(remaining))
         };
-        self.current_spans.push(Span::styled(top_left, Theme::code_block_border()));
+        self.current_spans
+            .push(Span::styled(top_left, Theme::code_block_border()));
         self.emit_line(LineType::CodeBlock);
 
         // Content lines with syntax highlighting
@@ -550,7 +555,8 @@ impl MdRenderer {
 
         // Bottom border
         let bottom = format!("╰{}╯", "─".repeat(block_width));
-        self.current_spans.push(Span::styled(bottom, Theme::code_block_border()));
+        self.current_spans
+            .push(Span::styled(bottom, Theme::code_block_border()));
         self.emit_line(LineType::CodeBlock);
         self.emit_empty();
     }
@@ -591,7 +597,8 @@ impl MdRenderer {
 
         // Top border
         let top = make_border("┌", "┬", "┐", "─");
-        self.current_spans.push(Span::styled(top, Theme::table_border()));
+        self.current_spans
+            .push(Span::styled(top, Theme::table_border()));
         self.emit_line(LineType::TableSeparator);
 
         for (row_idx, row) in rows.iter().enumerate() {
@@ -619,14 +626,16 @@ impl MdRenderer {
             // Separator after header or between rows
             if row_idx == 0 {
                 let sep = make_border("├", "┼", "┤", "─");
-                self.current_spans.push(Span::styled(sep, Theme::table_border()));
+                self.current_spans
+                    .push(Span::styled(sep, Theme::table_border()));
                 self.emit_line(LineType::TableSeparator);
             }
         }
 
         // Bottom border
         let bottom = make_border("└", "┴", "┘", "─");
-        self.current_spans.push(Span::styled(bottom, Theme::table_border()));
+        self.current_spans
+            .push(Span::styled(bottom, Theme::table_border()));
         self.emit_line(LineType::TableSeparator);
     }
 }
@@ -635,7 +644,7 @@ fn visible_width(s: &str) -> usize {
     unicode_width::UnicodeWidthStr::width(s)
 }
 
-fn word_wrap(text: &str, max_width: usize) -> Vec<String> {
+pub(crate) fn word_wrap(text: &str, max_width: usize) -> Vec<String> {
     if max_width == 0 {
         return vec![text.to_string()];
     }
@@ -646,7 +655,9 @@ fn word_wrap(text: &str, max_width: usize) -> Vec<String> {
 
     for word in text.split_whitespace() {
         let w = visible_width(word);
-        if current_width + w + if current.is_empty() { 0 } else { 1 } > max_width && !current.is_empty() {
+        if current_width + w + if current.is_empty() { 0 } else { 1 } > max_width
+            && !current.is_empty()
+        {
             lines.push(current);
             current = String::new();
             current_width = 0;
@@ -665,4 +676,89 @@ fn word_wrap(text: &str, max_width: usize) -> Vec<String> {
         lines.push(String::new());
     }
     lines
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn word_wrap_keeps_short_text_on_one_line() {
+        assert_eq!(word_wrap("hello world", 80), vec!["hello world"]);
+    }
+
+    #[test]
+    fn word_wrap_breaks_at_width_boundary() {
+        // Width 10 forces "hello" and "world" onto separate lines
+        // ("hello world" is 11 columns, one over the limit).
+        let wrapped = word_wrap("hello world", 10);
+        assert_eq!(wrapped, vec!["hello", "world"]);
+    }
+
+    #[test]
+    fn word_wrap_zero_width_returns_unmodified() {
+        assert_eq!(word_wrap("anything here", 0), vec!["anything here"]);
+    }
+
+    #[test]
+    fn word_wrap_empty_text_yields_single_empty_line() {
+        assert_eq!(word_wrap("", 40), vec![String::new()]);
+    }
+
+    #[test]
+    fn word_wrap_word_longer_than_width_is_not_split() {
+        // A single token wider than max_width is emitted whole rather than
+        // truncated or dropped.
+        let wrapped = word_wrap("supercalifragilistic", 5);
+        assert_eq!(wrapped, vec!["supercalifragilistic"]);
+    }
+
+    #[test]
+    fn parse_markdown_marks_heading_lines() {
+        let lines = parse_markdown("# Title\n\nbody text\n", 80);
+        let headers: Vec<_> = lines
+            .iter()
+            .filter(|l| matches!(l.line_type, LineType::Header(_)))
+            .collect();
+        assert_eq!(headers.len(), 1);
+        assert_eq!(headers[0].line_type, LineType::Header(1));
+        // The plain_text retains the rendered prefix; the title is present.
+        assert!(headers[0].plain_text.contains("Title"));
+    }
+
+    #[test]
+    fn parse_markdown_renders_nested_heading_levels() {
+        let lines = parse_markdown("# H1\n\n## H2\n\n### H3\n", 80);
+        let levels: Vec<u8> = lines
+            .iter()
+            .filter_map(|l| match l.line_type {
+                LineType::Header(n) => Some(n),
+                _ => None,
+            })
+            .collect();
+        assert_eq!(levels, vec![1, 2, 3]);
+    }
+
+    #[test]
+    fn parse_markdown_emits_code_block_lines() {
+        let src = "```rust\nfn main() {}\n```\n";
+        let lines = parse_markdown(src, 80);
+        let code_lines = lines
+            .iter()
+            .filter(|l| l.line_type == LineType::CodeBlock)
+            .count();
+        // Top border + one content line + bottom border = 3.
+        assert_eq!(code_lines, 3);
+        assert!(lines.iter().any(|l| l.plain_text.contains("fn main")));
+    }
+
+    #[test]
+    fn parse_markdown_marks_list_items() {
+        let lines = parse_markdown("- one\n- two\n", 80);
+        let items = lines
+            .iter()
+            .filter(|l| matches!(l.line_type, LineType::ListItem(_)))
+            .count();
+        assert_eq!(items, 2);
+    }
 }
